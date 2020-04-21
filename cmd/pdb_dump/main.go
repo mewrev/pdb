@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/kr/pretty"
@@ -31,5 +32,15 @@ func pdbDump(pdbPath string) error {
 		}
 	*/
 	pretty.Println(file)
+	for _, stream := range file.Streams {
+		switch stream := stream.(type) {
+		case *pdb.PDBStream:
+			fmt.Println("PDB stream:")
+			fmt.Println("   Version:", stream.Hdr.Version)
+			fmt.Println("   Date:", stream.Hdr.Date)
+			fmt.Println("   Age:", stream.Hdr.Age)
+			fmt.Println("   UniqueID:", stream.Hdr.UniqueID)
+		}
+	}
 	return nil
 }

@@ -4,6 +4,7 @@
 // ref: https://www.nationalarchives.gov.uk/pronom/fmt/1078
 // ref: https://github.com/Microsoft/microsoft-pdb/blob/master/PDB/msf/msf.cpp
 // ref: https://llvm.org/docs/PDB/MsfFile.html
+// ref: https://llvm.org/docs/PDB/index.html
 package pdb
 
 import (
@@ -53,6 +54,8 @@ type File struct {
 	FreePageMap *FreePageMap
 	// Stream table.
 	StreamTbl *StreamTable
+	// Streams.
+	Streams []Stream
 
 	// Contents of underlying PDB file.
 	Data []byte // TODO: rename to buf
@@ -266,14 +269,13 @@ func (file *File) parseStreamTable(r io.Reader) (*StreamTable, error) {
 	return streamTbl, nil
 }
 
-// parseStream parses the stream with the given stream number.
-func (file *File) parseStream(streamNum int) error {
-	dbg.Println("parseStream")
-	dbg.Println("   streamNum:", streamNum)
-	streamData := file.readStreamData(streamNum)
-	dbg.Print("   streamData:\n", hex.Dump(streamData))
-	return nil
-}
+// StreamID specifies a fixed stream index.
+type StreamID uint32
+
+// Fixed stream indices (fixed stream number).
+const (
+	StreamIDPDBStream StreamID = 1 // PDB stream
+)
 
 // readStreamData reads the contents of the stream with the given stream number,
 // concatenating its pages together.
@@ -287,4 +289,34 @@ func (file *File) readStreamData(streamNum int) []byte {
 		streamData = append(streamData, pageData...)
 	}
 	return streamData[:streamInfo.Size]
+}
+
+// Stream is a stream of a PDB file.
+//
+// Stream is one of the following types.
+//
+//    *PDBStream
+// TODO: add more stream types.
+type Stream interface{}
+
+// parseStream parses the stream with the given stream number.
+//
+// ref: https://llvm.org/docs/PDB/index.html#streams
+func (file *File) parseStream(streamNum int) error {
+	dbg.Println("parseStream")
+	dbg.Println("   streamNum:", streamNum)
+	streamData := file.readStreamData(streamNum)
+	dbg.Print("   streamData:\n", hex.Dump(streamData))
+	switch StreamID(streamNum) {
+	// PDB Stream
+	case StreamIDPDBStream:
+		pdbStream, err := file.parsePDBStream(bytes.NewReader(streamData))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		file.Streams = append(file.Streams, pdbStream)
+	default:
+		warn.Printf("support for stream number %d not yet implemented", streamNum)
+	}
+	return nil
 }
