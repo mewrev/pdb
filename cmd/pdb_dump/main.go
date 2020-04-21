@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"github.com/kr/pretty"
@@ -25,6 +26,9 @@ func pdbDump(pdbPath string) error {
 		return errors.WithStack(err)
 	}
 	file.Data = nil // TODO: remove
+	for pageNum := 0; pageNum < int(file.FileHdr.NPages); pageNum++ {
+		fmt.Printf("pageNum: %d, free: %v\n", pageNum, file.FreePageMap.IsFree(pageNum))
+	}
 	pretty.Println(file)
 	return nil
 }

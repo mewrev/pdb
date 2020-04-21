@@ -61,7 +61,11 @@ func ParseFile(pdbPath string) (*File, error) {
 		return nil, errors.WithStack(err)
 	}
 	file.FileHdr = msfHdr
-	// TODO: parse FreePageMap.
+	// Parse free page map.
+	freePageMapData := file.readPage(int(file.FileHdr.FreePageMapPageNum))
+	file.FreePageMap = &FreePageMap{
+		PageBits: freePageMapData,
+	}
 	// Parse stream table.
 	streamTblData := file.readStreamTable()
 	streamTbl, err := file.parseStreamTable(bytes.NewReader(streamTblData))
@@ -167,6 +171,14 @@ type FreePageMap struct {
 	PageBits []byte // length: msfHdr.PageSize
 }
 
+// IsFree reports whether the given page number is unused.
+func (fpm *FreePageMap) IsFree(pageNum int) bool {
+	i := pageNum / 8
+	j := pageNum % 8
+	mask := uint8(1) << j
+	return fpm.PageBits[i]&mask != 0
+}
+
 // StreamTable contains information about each stream of the MSF.
 //
 // Example [1]: Suppose a hypothetical PDB file with a 4KiB block size, and 4
@@ -177,15 +189,15 @@ type FreePageMap struct {
 //    * Stream 2: ceil(16000 / 4096) = 4 blocks
 //    * Stream 3: ceil(9000 / 4096) = 3 blocks
 //
-//    type stream_table struct {
-//      nstreams = uint32(4)
-//      stream_infos = []stream_info{{size: 1000}, {size: 8000}, {size: 16000}, {size: 9000}}
-//      page_num_maps = [][]uint16{
-//        {4},
-//        {5, 6},
-//        {11, 9, 7, 8},
-//        {10, 15, 12},
-//      },
+//    type StreamTable struct {
+//       NStreams = uint32(4)
+//       StreamInfos = []StreamInfo{{Size: 1000}, {Size: 8000}, {Size: 16000}, {Size: 9000}}
+//       PageNumMaps = [][]uint16{
+//          {4},
+//          {5, 6},
+//          {11, 9, 7, 8},
+//          {10, 15, 12},
+//       },
 //    }
 //
 // ref [1]: https://llvm.org/docs/PDB/MsfFile.html#the-stream-directory
