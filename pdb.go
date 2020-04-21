@@ -217,9 +217,12 @@ func (file *File) readStreamTable() []byte {
 type StreamID uint32
 
 // Fixed stream indices (fixed stream number).
+//
+// ref: https://llvm.org/docs/PDB/index.html#streams
 const (
 	StreamIDPrevStreamTable StreamID = 0 // previous stream table
 	StreamIDPDBStream       StreamID = 1 // PDB stream
+	StreamIDTPIStream       StreamID = 2 // TPI stream
 )
 
 // readStreamData reads the contents of the stream with the given stream number,
@@ -267,6 +270,7 @@ func (file *File) parseStream(streamNum int) error {
 			return errors.WithStack(err)
 		}
 		file.Streams = append(file.Streams, pdbStream)
+	// TPI stream
 	default:
 		warn.Printf("support for stream number %d not yet implemented", streamNum)
 	}

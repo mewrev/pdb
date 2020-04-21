@@ -10,11 +10,12 @@ func _() {
 	var x [1]struct{}
 	_ = x[StreamIDPrevStreamTable-0]
 	_ = x[StreamIDPDBStream-1]
+	_ = x[StreamIDTPIStream-2]
 }
 
-const _StreamID_name = "previous stream tablePDB stream"
+const _StreamID_name = "previous stream tablePDB streamTPI stream"
 
-var _StreamID_index = [...]uint8{0, 21, 31}
+var _StreamID_index = [...]uint8{0, 21, 31, 41}
 
 func (i StreamID) String() string {
 	if i >= StreamID(len(_StreamID_index)-1) {
