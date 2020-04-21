@@ -4,10 +4,21 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/kr/pretty"
+	"github.com/mewkiz/pkg/term"
 	"github.com/mewrev/pdb"
 	"github.com/pkg/errors"
+)
+
+var (
+	// dbg is a logger with the "pdb_dump:" prefix which logs debug messages to
+	// standard error.
+	dbg = log.New(os.Stderr, term.CyanBold("pdb_dump:")+" ", 0)
+	// warn is a logger with the "pdb_dump:" prefix which logs warning messages to
+	// standard error.
+	warn = log.New(os.Stderr, term.RedBold("pdb_dump:")+" ", 0)
 )
 
 func main() {
@@ -32,14 +43,25 @@ func pdbDump(pdbPath string) error {
 		}
 	*/
 	pretty.Println(file)
-	for _, stream := range file.Streams {
+	fmt.Println()
+	for streamNum, stream := range file.Streams {
+		streamID := pdb.StreamID(streamNum)
+		fmt.Printf("=== [ %v ] ===================================\n", streamID)
+		fmt.Println()
+		pretty.Println(stream)
+		fmt.Println()
 		switch stream := stream.(type) {
+		case *pdb.StreamTable:
+			// nothing to do.
 		case *pdb.PDBStream:
-			fmt.Println("PDB stream:")
+			fmt.Println(streamID)
 			fmt.Println("   Version:", stream.Hdr.Version)
 			fmt.Println("   Date:", stream.Hdr.Date)
 			fmt.Println("   Age:", stream.Hdr.Age)
 			fmt.Println("   UniqueID:", stream.Hdr.UniqueID)
+			fmt.Println()
+		default:
+			warn.Printf("not yet pretty-printing stream %T", stream)
 		}
 	}
 	return nil
