@@ -9,11 +9,24 @@ package pdb
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"io"
 	"io/ioutil"
+	"log"
 	"math"
+	"os"
 
+	"github.com/mewkiz/pkg/term"
 	"github.com/pkg/errors"
+)
+
+var (
+	// dbg is a logger with the "pdb:" prefix which logs debug messages to standard
+	// error.
+	dbg = log.New(os.Stderr, term.CyanBold("pdb:")+" ", 0)
+	// warn is a logger with the "pdb:" prefix which logs warning messages to
+	// standard error.
+	warn = log.New(os.Stderr, term.RedBold("pdb:")+" ", 0)
 )
 
 // From https://github.com/microsoft/microsoft-pdb
@@ -73,7 +86,10 @@ func ParseFile(pdbPath string) (*File, error) {
 		return nil, errors.WithStack(err)
 	}
 	file.StreamTbl = streamTbl
-	// TODO: parse streams.
+	// Parse streams.
+	for streamNum := 0; streamNum < int(file.StreamTbl.NStreams); streamNum++ {
+		file.parseStream(streamNum)
+	}
 	return file, nil
 }
 
@@ -223,7 +239,7 @@ func (file *File) readStreamTable() []byte {
 		pageData := file.readPage(pageNum)
 		streamTblData = append(streamTblData, pageData...)
 	}
-	return streamTblData
+	return streamTblData[:file.FileHdr.StreamTblInfo.Size]
 }
 
 // parseStreamTable parses the given stream table, reading from r.
@@ -248,4 +264,27 @@ func (file *File) parseStreamTable(r io.Reader) (*StreamTable, error) {
 		}
 	}
 	return streamTbl, nil
+}
+
+// parseStream parses the stream with the given stream number.
+func (file *File) parseStream(streamNum int) error {
+	dbg.Println("parseStream")
+	dbg.Println("   streamNum:", streamNum)
+	streamData := file.readStreamData(streamNum)
+	dbg.Print("   streamData:\n", hex.Dump(streamData))
+	return nil
+}
+
+// readStreamData reads the contents of the stream with the given stream number,
+// concatenating its pages together.
+func (file *File) readStreamData(streamNum int) []byte {
+	streamInfo := file.StreamTbl.StreamInfos[streamNum]
+	pageNumMap := file.StreamTbl.PageNumMaps[streamNum]
+	var streamData []byte
+	for streamPageNum, pageNum := range pageNumMap {
+		_ = streamPageNum
+		pageData := file.readPage(int(pageNum))
+		streamData = append(streamData, pageData...)
+	}
+	return streamData[:streamInfo.Size]
 }
