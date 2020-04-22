@@ -15,6 +15,7 @@ func _() {
 	_ = x[TypeModePointer32-1024]
 	_ = x[TypeModePointer32Far-1280]
 	_ = x[TypeModePointer64-1536]
+	_ = x[TypeModePointer128-1792]
 }
 
 const (
@@ -25,6 +26,7 @@ const (
 	_TypeMode_name_4 = "32 bit pointer"
 	_TypeMode_name_5 = "16:32 far pointer"
 	_TypeMode_name_6 = "64 bit pointer"
+	_TypeMode_name_7 = "128 bit pointer"
 )
 
 func (i TypeMode) String() string {
@@ -43,6 +45,8 @@ func (i TypeMode) String() string {
 		return _TypeMode_name_5
 	case i == 1536:
 		return _TypeMode_name_6
+	case i == 1792:
+		return _TypeMode_name_7
 	default:
 		return "TypeMode(" + strconv.FormatInt(int64(i), 10) + ")"
 	}

@@ -12,7 +12,7 @@ func _() {
 	_ = x[TypeKindAbs-1]
 	_ = x[TypeKindSegment-2]
 	_ = x[TypeKindVoid-3]
-	_ = x[TypeKindHRESULT-8]
+	_ = x[TypeKindHResult-8]
 	_ = x[TypeKindCurrency-4]
 	_ = x[TypeKindBasicStringNear-5]
 	_ = x[TypeKindBasicStringFar-6]
@@ -34,22 +34,22 @@ func _() {
 	_ = x[TypeKindUint64-119]
 	_ = x[TypeKindInt128-120]
 	_ = x[TypeKindUint128-121]
-	_ = x[TypeKindChar-16]
-	_ = x[TypeKindUChar-32]
-	_ = x[TypeKindShort-17]
-	_ = x[TypeKindUShort-33]
-	_ = x[TypeKindLong-18]
-	_ = x[TypeKindQuad-19]
-	_ = x[TypeKindUQuad-35]
-	_ = x[TypeKindOctet-20]
-	_ = x[TypeKindUOctet-36]
-	_ = x[TypeKindReal16-70]
-	_ = x[TypeKindReal32-64]
-	_ = x[TypeKindReal32PP-69]
-	_ = x[TypeKindReal48-68]
-	_ = x[TypeKindReal64-65]
-	_ = x[TypeKindReal80-66]
-	_ = x[TypeKindReal128-67]
+	_ = x[TypeKindInt8Byte-16]
+	_ = x[TypeKindUint8Byte-32]
+	_ = x[TypeKindInt16Short-17]
+	_ = x[TypeKindUint16Short-33]
+	_ = x[TypeKindInt32Long-18]
+	_ = x[TypeKindInt64Quad-19]
+	_ = x[TypeKindUint64Quad-35]
+	_ = x[TypeKindInt128Octet-20]
+	_ = x[TypeKindUint128Octet-36]
+	_ = x[TypeKindFloat16-70]
+	_ = x[TypeKindFloat32-64]
+	_ = x[TypeKindFloat32PP-69]
+	_ = x[TypeKindFloat48-68]
+	_ = x[TypeKindFloat64-65]
+	_ = x[TypeKindFloat80-66]
+	_ = x[TypeKindFloat128-67]
 	_ = x[TypeKindComplex32-80]
 	_ = x[TypeKindComplex64-81]
 	_ = x[TypeKindComplex80-82]
@@ -58,10 +58,11 @@ func _() {
 	_ = x[TypeKindBool16-49]
 	_ = x[TypeKindBool32-50]
 	_ = x[TypeKindBool64-51]
+	_ = x[TypeKindBool128-52]
 	_ = x[TypeKindInternal-240]
 }
 
-const _TypeKind_name = "uncharacterized type (no type)absolute symbolsegment typevoidBASIC 8 byte currency valuenear BASIC stringfar BASIC stringtype not translated by cvpackHRESULT8 bit signed16 bit signed32 bit signed64 bit signed128 bit signed8 bit unsigned16 bit unsigned64 bit unsigned128 bit unsigned8 bit boolean16 bit boolean32 bit boolean64 bit boolean32 bit real64 bit real80 bit real128 bit real48 bit real32 bit partial-precision real16 bit real32 bit complex64 bit complex80 bit complex128 bit complexbitPascal CHAR32-bit BOOL where true is 0xffffffff8 bit signed int8 bit unsigned intreally a charwide char16 bit signed int16 bit unsigned int32 bit signed int32 bit unsigned int64 bit signed int64 bit unsigned int128 bit signed int128 bit unsigned int16-bit unicode char32-bit unicode charCV internal type"
+const _TypeKind_name = "uncharacterized type (no type)absolute symbolsegment typevoidBASIC 8 byte currency valuenear BASIC stringfar BASIC stringtype not translated by cvpackHRESULT8 bit signed16 bit signed32 bit signed64 bit signed128 bit signed8 bit unsigned16 bit unsigned64 bit unsigned128 bit unsigned8 bit boolean16 bit boolean32 bit boolean64 bit boolean128 bit boolean32 bit real64 bit real80 bit real128 bit real48 bit real32 bit partial-precision real16 bit real32 bit complex64 bit complex80 bit complex128 bit complexbitPascal CHAR32-bit BOOL where true is 0xffffffff8 bit signed int8 bit unsigned intreally a charwide char16 bit signed int16 bit unsigned int32 bit signed int32 bit unsigned int64 bit signed int64 bit unsigned int128 bit signed int128 bit unsigned int16-bit unicode char32-bit unicode charCV internal type"
 
 var _TypeKind_map = map[TypeKind]string{
 	0:   _TypeKind_name[0:30],
@@ -86,35 +87,36 @@ var _TypeKind_map = map[TypeKind]string{
 	49:  _TypeKind_name[295:309],
 	50:  _TypeKind_name[309:323],
 	51:  _TypeKind_name[323:337],
-	64:  _TypeKind_name[337:348],
-	65:  _TypeKind_name[348:359],
-	66:  _TypeKind_name[359:370],
-	67:  _TypeKind_name[370:382],
-	68:  _TypeKind_name[382:393],
-	69:  _TypeKind_name[393:422],
-	70:  _TypeKind_name[422:433],
-	80:  _TypeKind_name[433:447],
-	81:  _TypeKind_name[447:461],
-	82:  _TypeKind_name[461:475],
-	83:  _TypeKind_name[475:490],
-	96:  _TypeKind_name[490:493],
-	97:  _TypeKind_name[493:504],
-	98:  _TypeKind_name[504:540],
-	104: _TypeKind_name[540:556],
-	105: _TypeKind_name[556:574],
-	112: _TypeKind_name[574:587],
-	113: _TypeKind_name[587:596],
-	114: _TypeKind_name[596:613],
-	115: _TypeKind_name[613:632],
-	116: _TypeKind_name[632:649],
-	117: _TypeKind_name[649:668],
-	118: _TypeKind_name[668:685],
-	119: _TypeKind_name[685:704],
-	120: _TypeKind_name[704:722],
-	121: _TypeKind_name[722:742],
-	122: _TypeKind_name[742:761],
-	123: _TypeKind_name[761:780],
-	240: _TypeKind_name[780:796],
+	52:  _TypeKind_name[337:352],
+	64:  _TypeKind_name[352:363],
+	65:  _TypeKind_name[363:374],
+	66:  _TypeKind_name[374:385],
+	67:  _TypeKind_name[385:397],
+	68:  _TypeKind_name[397:408],
+	69:  _TypeKind_name[408:437],
+	70:  _TypeKind_name[437:448],
+	80:  _TypeKind_name[448:462],
+	81:  _TypeKind_name[462:476],
+	82:  _TypeKind_name[476:490],
+	83:  _TypeKind_name[490:505],
+	96:  _TypeKind_name[505:508],
+	97:  _TypeKind_name[508:519],
+	98:  _TypeKind_name[519:555],
+	104: _TypeKind_name[555:571],
+	105: _TypeKind_name[571:589],
+	112: _TypeKind_name[589:602],
+	113: _TypeKind_name[602:611],
+	114: _TypeKind_name[611:628],
+	115: _TypeKind_name[628:647],
+	116: _TypeKind_name[647:664],
+	117: _TypeKind_name[664:683],
+	118: _TypeKind_name[683:700],
+	119: _TypeKind_name[700:719],
+	120: _TypeKind_name[719:737],
+	121: _TypeKind_name[737:757],
+	122: _TypeKind_name[757:776],
+	123: _TypeKind_name[776:795],
+	240: _TypeKind_name[795:811],
 }
 
 func (i TypeKind) String() string {

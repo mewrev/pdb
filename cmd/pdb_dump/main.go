@@ -60,6 +60,12 @@ func pdbDump(pdbPath string) error {
 			fmt.Println("   Age:", stream.Hdr.Age)
 			fmt.Println("   UniqueID:", stream.Hdr.UniqueID)
 			fmt.Println()
+		case *pdb.TPIStream:
+			fmt.Println(streamID)
+			fmt.Println("   Version:", stream.Hdr.Version)
+			fmt.Println("   FirstTypeID:", stream.Hdr.FirstTypeID)
+			fmt.Println("   LastTypeID:", stream.Hdr.LastTypeID)
+			fmt.Println()
 		default:
 			warn.Printf("not yet pretty-printing stream %T", stream)
 		}

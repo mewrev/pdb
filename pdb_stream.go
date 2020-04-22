@@ -54,16 +54,16 @@ type PDBVersion uint32
 //
 // ref: PDBIMPV
 const (
-	PDBVersionVC2     PDBVersion = 19941610 // VC 2 (1994-10-16)
-	PDBVersionVC4     PDBVersion = 19950623 // VC 4 (1995-06-23)
-	PDBVersionVC41    PDBVersion = 19950814 // VC 4.1 (1995-08-14)
-	PDBVersionVC50    PDBVersion = 19960307 // VC 5.0 (1996-03-07)
-	PDBVersionVC98    PDBVersion = 19970604 // VC 98 (1997-06-04)
-	PDBVersionVC70    PDBVersion = 20000404 // VC 7.0 (2000-04-04)
-	PDBVersionVC70Dep PDBVersion = 19990604 // VC 7.0 - deprecated (1999-06-04)
-	PDBVersionVC80    PDBVersion = 20030901 // VC 8.0 (2003-09-01)
-	PDBVersionVC110   PDBVersion = 20091201 // VC 11.0 (2009-12-01)
-	PDBVersionVC140   PDBVersion = 20140508 // VC 14.0 (2014-05-08)
+	PDBVersionVC2            PDBVersion = 19941610 // VC 2 (1994-10-16)
+	PDBVersionVC4            PDBVersion = 19950623 // VC 4 (1995-06-23)
+	PDBVersionVC41           PDBVersion = 19950814 // VC 4.1 (1995-08-14)
+	PDBVersionVC50           PDBVersion = 19960307 // VC 5.0 (1996-03-07)
+	PDBVersionVC98           PDBVersion = 19970604 // VC 98 (1997-06-04)
+	PDBVersionVC70Deprecated PDBVersion = 19990604 // VC 7.0 - deprecated (1999-06-04)
+	PDBVersionVC70           PDBVersion = 20000404 // VC 7.0 (2000-04-04)
+	PDBVersionVC80           PDBVersion = 20030901 // VC 8.0 (2003-09-01)
+	PDBVersionVC110          PDBVersion = 20091201 // VC 11.0 (2009-12-01)
+	PDBVersionVC140          PDBVersion = 20140508 // VC 14.0 (2014-05-08)
 )
 
 // GUID is a globally unique identifier.

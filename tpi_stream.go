@@ -1,6 +1,7 @@
 package pdb
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 
@@ -10,11 +11,12 @@ import (
 // TPIStream records information about types used in the program. Types are
 // referenced by their type index from other parts of the PDB.
 //
-// ref: https://llvm.org/docs/PDB/TPIStream.html
+// ref: https://llvm.org/docs/PDB/TpiStream.html
 type TPIStream struct {
 	// TPI stream header.
-	Hdr *TPIStreamHeader
+	Hdr *TPIStreamHeader16
 	// Type records.
+	// TODO: add type records.
 	//Types []TypeRecord // TODO: uncomment
 }
 
@@ -22,7 +24,7 @@ type TPIStream struct {
 func (file *File) parseTPIStream(r io.Reader) (*TPIStream, error) {
 	// Parse TPI stream header.
 	tpiStream := &TPIStream{}
-	hdr, err := file.parseTPIStreamHeader(r)
+	hdr, err := file.parseTPIStreamHeader16(r)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -31,28 +33,80 @@ func (file *File) parseTPIStream(r io.Reader) (*TPIStream, error) {
 	return tpiStream, nil
 }
 
-// TPIStreamHeader is a header of the TPI stream.
-type TPIStreamHeader struct {
+// TPIStreamHeader16 is a header of the TPI stream with 16-bit type IDs.
+//
+// ref: HDR_16t in PDB/dbi/tpi.h
+type TPIStreamHeader16 struct {
+	// TPI version.
+	Version TPIVersion
+	// First type index, inclusive; type index of first type record in the TPI
+	// stream.
+	FirstTypeID TypeID16
+	// Last type index, exclusive.
+	LastTypeID TypeID16
+	// Size in bytes of type records data following header.
+	TypeRecordsSize int32
+	// Index of TPI hash stream.
+	HashStreamNum StreamNumber
 }
 
-// parseTPIStreamHeader parses the given TPI stream header.
-func (file *File) parseTPIStreamHeader(r io.Reader) (*TPIStreamHeader, error) {
-	hdr := &TPIStreamHeader{}
-	// TODO: implement
+//go:generate stringer -linecomment -type TPIVersion
+
+// TPIVersion specifies the version of Visual Studio Code used to produce the
+// TPI. However, in practise, VC80 is almost always used (even if the version of
+// VC used to produce the TPI was newer).
+type TPIVersion uint32
+
+// TPI versions.
+//
+// ref: TPIIMPV
+const (
+	TPIVersionV40        TPIVersion = 19950410 // V 4.0 (1995-04-10)
+	TPIVersionV41        TPIVersion = 19951122 // V 4.1 (1995-11-22)
+	TPIVersionV50Interim TPIVersion = 19960307 // V 5.0 - interim (1996-03-07)
+	TPIVersionV50        TPIVersion = 19961031 // V 5.0 (1996-10-31)
+	TPIVersionV70        TPIVersion = 19990903 // V 7.0 (1999-09-03)
+	TPIVersionV80        TPIVersion = 20040203 // V 8.0 (2004-02-03)
+)
+
+// parseTPIStreamHeader16 parses the given TPI stream header with 16-bit type
+// indices.
+func (file *File) parseTPIStreamHeader16(r io.Reader) (*TPIStreamHeader16, error) {
+	// Version.
+	hdr := &TPIStreamHeader16{}
+	if err := binary.Read(r, binary.LittleEndian, &hdr.Version); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	// FirstTypeID.
+	if err := binary.Read(r, binary.LittleEndian, &hdr.FirstTypeID); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	// LastTypeID.
+	if err := binary.Read(r, binary.LittleEndian, &hdr.LastTypeID); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	// TypeRecordsSize.
+	if err := binary.Read(r, binary.LittleEndian, &hdr.TypeRecordsSize); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	// HashStreamNum.
+	if err := binary.Read(r, binary.LittleEndian, &hdr.HashStreamNum); err != nil {
+		return nil, errors.WithStack(err)
+	}
 	return hdr, nil
 }
 
-// TypeID is a type index which uniquely identifies a type of the PDB.
+// TypeID16 is a 16-bit type index which uniquely identifies a type of the PDB.
 //
 // Any typeID >= Hdr.FirstTypeID is persumed to come from the corresponding TPI
 // (or IPI) stream.
 //
 // A typeID < Hdr.FirstTypeID is decomposed as follows:
 //
-//    +----------------------+------+----------+
-//    | unused               | mode | kind     |
-//    +----------------------+------+----------+
-//    |+32                   |+12   |+8        |+0
+//    +----------+----------+------------------+
+//    | unused   | mode     | kind             |
+//    +----------+----------+------------------+
+//    |+16       |+12       |+8                |+0
 //
 // A basic type composed of a type kind and a type mode.
 //
@@ -60,13 +114,16 @@ func (file *File) parseTPIStreamHeader(r io.Reader) (*TPIStreamHeader, error) {
 //
 //    0b0000MMMMKKKKKKKK // mode and kind bits marked with 'M' and 'K' respectively.
 //
-// ref: https://llvm.org/docs/PDB/TpiStream.html#type-indices
-type TypeID uint32
+// ref [2]: https://llvm.org/docs/PDB/TpiStream.html#type-indices
+type TypeID16 uint16
 
 // String returns the string representation of the given basic type.
-func (typeID TypeID) String() string {
+func (typeID TypeID16) String() string {
+	// "The value of the type index for the first type record from the TPI stream
+	// is given by the TypeIndexBegin member of the TPI Stream Header although in
+	// practice this value is always equal to 0x1000 (4096)" [2].
 	if typeID >= 0x1000 {
-		return fmt.Sprintf("TypeID(%d)", uint32(typeID))
+		return fmt.Sprintf("TypeID(%d)", uint16(typeID))
 	}
 	mode := TypeMode(typeID & 0x0F00)
 	kind := TypeKind(typeID & 0x00FF)
@@ -105,6 +162,7 @@ const (
 	TypeModePointer32     TypeMode = 0x0400 // 32 bit pointer
 	TypeModePointer32Far  TypeMode = 0x0500 // 16:32 far pointer
 	TypeModePointer64     TypeMode = 0x0600 // 64 bit pointer
+	TypeModePointer128    TypeMode = 0x0700 // 128 bit pointer
 )
 
 //go:generate stringer -linecomment -type TypeKind
@@ -123,7 +181,7 @@ const (
 	TypeKindAbs             TypeKind = 0x0001 // absolute symbol
 	TypeKindSegment         TypeKind = 0x0002 // segment type
 	TypeKindVoid            TypeKind = 0x0003 // void
-	TypeKindHRESULT         TypeKind = 0x0008 // HRESULT
+	TypeKindHResult         TypeKind = 0x0008 // HRESULT
 	TypeKindCurrency        TypeKind = 0x0004 // BASIC 8 byte currency value
 	TypeKindBasicStringNear TypeKind = 0x0005 // near BASIC string
 	TypeKindBasicStringFar  TypeKind = 0x0006 // far BASIC string
@@ -153,33 +211,34 @@ const (
 	TypeKindUint128 TypeKind = 0x0079 // 128 bit unsigned int
 
 	// 8 bit character types
-	TypeKindChar  TypeKind = 0x0010 // 8 bit signed
-	TypeKindUChar TypeKind = 0x0020 // 8 bit unsigned
+	TypeKindInt8Byte  TypeKind = 0x0010 // 8 bit signed
+	TypeKindUint8Byte TypeKind = 0x0020 // 8 bit unsigned
 
 	// 16 bit short types
-	TypeKindShort  TypeKind = 0x0011 // 16 bit signed
-	TypeKindUShort TypeKind = 0x0021 // 16 bit unsigned
+	TypeKindInt16Short  TypeKind = 0x0011 // 16 bit signed
+	TypeKindUint16Short TypeKind = 0x0021 // 16 bit unsigned
 
 	// 32 bit long types
-	TypeKindLong TypeKind = 0x0012 // 32 bit signed
+	TypeKindInt32Long TypeKind = 0x0012 // 32 bit signed
 	// NOTE: by consistency, 0x0022 should be "32 bit unsigned"
+	//TypeKindUint32Long TypeKind = 0x0022 // 32 bit unsigned
 
 	// 64 bit quad types
-	TypeKindQuad  TypeKind = 0x0013 // 64 bit signed
-	TypeKindUQuad TypeKind = 0x0023 // 64 bit unsigned
+	TypeKindInt64Quad  TypeKind = 0x0013 // 64 bit signed
+	TypeKindUint64Quad TypeKind = 0x0023 // 64 bit unsigned
 
 	// 128 bit octet types
-	TypeKindOctet  TypeKind = 0x0014 // 128 bit signed
-	TypeKindUOctet TypeKind = 0x0024 // 128 bit unsigned
+	TypeKindInt128Octet  TypeKind = 0x0014 // 128 bit signed
+	TypeKindUint128Octet TypeKind = 0x0024 // 128 bit unsigned
 
-	// real types
-	TypeKindReal16   TypeKind = 0x0046 // 16 bit real
-	TypeKindReal32   TypeKind = 0x0040 // 32 bit real
-	TypeKindReal32PP TypeKind = 0x0045 // 32 bit partial-precision real
-	TypeKindReal48   TypeKind = 0x0044 // 48 bit real
-	TypeKindReal64   TypeKind = 0x0041 // 64 bit real
-	TypeKindReal80   TypeKind = 0x0042 // 80 bit real
-	TypeKindReal128  TypeKind = 0x0043 // 128 bit real
+	// floating-point types
+	TypeKindFloat16   TypeKind = 0x0046 // 16 bit real
+	TypeKindFloat32   TypeKind = 0x0040 // 32 bit real
+	TypeKindFloat32PP TypeKind = 0x0045 // 32 bit partial-precision real
+	TypeKindFloat48   TypeKind = 0x0044 // 48 bit real
+	TypeKindFloat64   TypeKind = 0x0041 // 64 bit real
+	TypeKindFloat80   TypeKind = 0x0042 // 80 bit real
+	TypeKindFloat128  TypeKind = 0x0043 // 128 bit real
 
 	// complex types
 	TypeKindComplex32  TypeKind = 0x0050 // 32 bit complex
@@ -188,10 +247,11 @@ const (
 	TypeKindComplex128 TypeKind = 0x0053 // 128 bit complex
 
 	// boolean types
-	TypeKindBool8  TypeKind = 0x0030 // 8 bit boolean
-	TypeKindBool16 TypeKind = 0x0031 // 16 bit boolean
-	TypeKindBool32 TypeKind = 0x0032 // 32 bit boolean
-	TypeKindBool64 TypeKind = 0x0033 // 64 bit boolean
+	TypeKindBool8   TypeKind = 0x0030 // 8 bit boolean
+	TypeKindBool16  TypeKind = 0x0031 // 16 bit boolean
+	TypeKindBool32  TypeKind = 0x0032 // 32 bit boolean
+	TypeKindBool64  TypeKind = 0x0033 // 64 bit boolean
+	TypeKindBool128 TypeKind = 0x0034 // 128 bit boolean
 
 	// ???
 	TypeKindInternal TypeKind = 0x00F0 // CV internal type

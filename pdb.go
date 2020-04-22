@@ -211,6 +211,9 @@ func (file *File) readStreamTable() []byte {
 	return streamTblData[:file.FileHdr.StreamTblInfo.Size]
 }
 
+// StreamNumber is a stream index.
+type StreamNumber uint16
+
 //go:generate stringer -linecomment -type StreamID
 
 // StreamID specifies a fixed stream index.
@@ -271,6 +274,12 @@ func (file *File) parseStream(streamNum int) error {
 		}
 		file.Streams = append(file.Streams, pdbStream)
 	// TPI stream
+	case StreamIDTPIStream:
+		tpiStream, err := file.parseTPIStream(bytes.NewReader(streamData))
+		if err != nil {
+			return errors.WithStack(err)
+		}
+		file.Streams = append(file.Streams, tpiStream)
 	default:
 		warn.Printf("support for stream number %d not yet implemented", streamNum)
 	}
