@@ -1,10 +1,14 @@
 package pdb
 
 import (
+	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 
+	"github.com/kr/pretty"
 	"github.com/pkg/errors"
 )
 
@@ -16,8 +20,7 @@ type TPIStream struct {
 	// TPI stream header.
 	Hdr *TPIStreamHeader16
 	// Type records.
-	// TODO: add type records.
-	//Types []TypeRecord // TODO: uncomment
+	Types []TypeRecord
 }
 
 // parseTPIStream parses the given TPI stream.
@@ -29,7 +32,33 @@ func (file *File) parseTPIStream(r io.Reader) (*TPIStream, error) {
 		return nil, errors.WithStack(err)
 	}
 	tpiStream.Hdr = hdr
-	// TODO: parse type records.
+	// Skip padding.
+	buf := &bytes.Buffer{}
+	binary.Write(buf, binary.LittleEndian, &TPIStreamHeader16{})
+	hdrSize := int64(buf.Len())
+	dbg.Println("   hdrSize:", hdrSize)
+	npad := hdrSize % 4
+	dbg.Println("   npad:", npad)
+	if _, err := io.CopyN(ioutil.Discard, r, npad); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	// Parse type records.
+	typeRecordsData := make([]byte, hdr.TypeRecordsSize)
+	if _, err := io.ReadFull(r, typeRecordsData); err != nil {
+		return nil, errors.WithStack(err)
+	}
+	dbg.Print("type records data:\n", hex.Dump(typeRecordsData))
+	rr := bytes.NewReader(typeRecordsData)
+	ntypes := int(hdr.LastTypeID - hdr.FirstTypeID) // TODO: handle 0 case.
+	tpiStream.Types = make([]TypeRecord, ntypes)
+	for i := 0; i < ntypes; i++ {
+		t, err := file.parseTypeRecord(rr)
+		if err != nil {
+			return nil, errors.WithStack(err)
+		}
+		pretty.Println("t:", t)
+		tpiStream.Types[i] = t
+	}
 	return tpiStream, nil
 }
 

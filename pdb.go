@@ -91,7 +91,9 @@ func ParseFile(pdbPath string) (*File, error) {
 	file.StreamTbl = streamTbl
 	// Parse streams.
 	for streamNum := 0; streamNum < int(file.StreamTbl.NStreams); streamNum++ {
-		file.parseStream(streamNum)
+		if err := file.parseStream(streamNum); err != nil {
+			return nil, errors.WithStack(err)
+		}
 	}
 	return file, nil
 }
